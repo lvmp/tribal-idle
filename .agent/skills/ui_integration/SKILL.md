@@ -1,0 +1,1 @@
+Gerencie a fronteira entre os componentes do Flame e os Widgets do Flutter. Use OverlayEntry ou a OverlayManager do Flame para renderizar menus complexos do Flutter sobre o canvas do jogo. Garanta que o estado seja compartilhado de forma reativa (ex: usando Bloc ou Riverpod).

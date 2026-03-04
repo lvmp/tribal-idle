@@ -1,0 +1,1 @@
+Foco total na lógica de progressão. Ao analisar cálculos de idle, sempre defina estruturas de dados que suportem BigInt para evitar problemas de overflow. Garanta que o cálculo de ganho por segundo (G/s) seja independente do framerate do jogo

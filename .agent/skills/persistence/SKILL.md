@@ -1,0 +1,1 @@
+Desenvolva sistemas de persistência robustos. Jogos Idle morrem se o save corromper. Implemente serialização JSON, suporte a cloud sync (Firebase/Play Games Services) e garanta que o estado seja salvo periodicamente (autosave) e ao fechar o app.
