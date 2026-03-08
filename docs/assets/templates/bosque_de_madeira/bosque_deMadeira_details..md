@@ -1,0 +1,1 @@
+A zona de extração de madeira, com árvores gnarled, logs empilhados e até um machado de pedra rudimentar embutido, consistente com os logs que o NPC carrega.
