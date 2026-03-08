@@ -4,14 +4,24 @@
 O projeto utiliza uma separação clara entre a Camada de Jogo (Flame) e a Camada de UI (Flutter Widgets).
 
 ## Estrutura de Pastas
-- `lib/domain/`: Regras de negócio, cálculos matemáticos (Idle Logic), modelos.
-- `lib/infrastructure/`: Repositórios, persistência (Hive/Isar), serviços (Ads).
-- `lib/presentation/`:
-  - `game/`: Componentes do Flame, Game Loop, Entidades.
-  - `widgets/`: UI do Flutter, Menus, Hud, Overlays.
-- `lib/shared/`: Gerenciamento de estado (Riverpod/Bloc), constantes.
+```
+lib/
+├── domain/
+│   ├── models/           # Entidades (ex: Resource, Manager, FireState)
+│   ├── logic/            # Regras de negócio (Idle math, tick logic)
+│   └── repositories/     # Interfaces de repositório
+├── infrastructure/
+│   ├── persistence/      # Hive Adapters, Data Sources
+│   └── services/         # AdMobService, FirebaseService
+├── presentation/
+│   ├── game/             # FlameGame, Componentes, GameLoop
+│   └── widgets/          # Flutter UI Widgets, Overlays, HUD
+└── shared/
+    ├── state/            # Riverpod Providers, Notifiers
+    └── constants/        # Cores, Sprites, Configurações
+```
 
-## Fluxo de Dados (The Bridge)
+# Fluxo de Dados (The Bridge)
 1. **Source of Truth:** O estado do jogo reside em `lib/domain/`.
 2. **Game Loop:** O Flame lê o estado de `domain` para renderizar o canvas.
 3. **UI Interaction:** Flutter Widgets disparam eventos que atualizam o estado em `domain`.
