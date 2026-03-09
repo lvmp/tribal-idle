@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tribal_idle/presentation/game/components/fire_bar_component.dart';
 import 'package:tribal_idle/presentation/game/components/wood_label_component.dart';
 import 'package:tribal_idle/shared/state/providers.dart';
 
@@ -10,6 +11,7 @@ import 'package:tribal_idle/shared/state/providers.dart';
 /// O "mundo" do jogo — contém todos os componentes visuais do Flame.
 ///
 /// Adicione aqui: background, fogueira, NPCs, zonas de coleta.
+/// NÃO adicione componentes de HUD aqui — eles vão para camera.viewport.
 class TribalWorld extends World {
   final ProviderContainer container;
 
@@ -17,12 +19,9 @@ class TribalWorld extends World {
 
   @override
   Future<void> onLoad() async {
-    // Exibe o valor de madeira diretamente no canvas Flame.
-    await add(WoodLabelComponent(container: container));
-
     // TODO: Adicionar componentes visuais:
     //   - ParallaxComponent (background)
-    //   - FireComponent
+    //   - FireComponent (sprite da fogueira)
     //   - ZoneComponent(s) (coleta de madeira, comida)
     //   - NpcComponent(s)
   }
@@ -56,6 +55,14 @@ class TribalIdleGame extends FlameGame<TribalWorld> {
     // Carregar estado salvo (inclui ganhos offline)
     await _notifier.initialize();
 
+    // ── HUD Flame (viewport-space — não se move com a câmera) ─────────
+    // Componentes adicionados ao camera.viewport ficam fixos na tela,
+    // independente de onde a câmera está no mundo.
+    await camera.viewport.addAll([
+      WoodLabelComponent(container: _container),
+      FireBarComponent(container: _container),
+    ]);
+
     // Economy tick: a cada 1 segundo
     add(
       TimerComponent(period: 1.0, repeat: true, onTick: () => _notifier.tick()),
@@ -70,7 +77,7 @@ class TribalIdleGame extends FlameGame<TribalWorld> {
       ),
     );
 
-    // HUD sempre visível
+    // HUD Flutter sempre visível
     overlays.add('hud');
   }
 

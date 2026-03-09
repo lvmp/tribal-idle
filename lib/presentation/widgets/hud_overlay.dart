@@ -26,9 +26,9 @@ class HudOverlay extends ConsumerWidget {
             _ResourceChip(icon: '🍖', label: 'Comida', value: state.food),
             _ResourceChip(
               icon: '🔥',
-              label: 'Fogo Nv.',
-              value: state.fireLevel.toDouble(),
-              isInt: true,
+              label: 'Fogo',
+              value: state.fireFuelPercent * 100,
+              suffix: '%',
             ),
           ],
         ),
@@ -43,22 +43,21 @@ class _ResourceChip extends StatelessWidget {
   final String icon;
   final String label;
   final double value;
-  final bool isInt;
+  final String? suffix;
 
   const _ResourceChip({
     required this.icon,
     required this.label,
     required this.value,
-    this.isInt = false,
+    this.suffix,
   });
 
   @override
   Widget build(BuildContext context) {
-    final displayValue = isInt
-        ? value.toInt().toString()
-        : value >= 1000
+    final raw = value >= 1000
         ? '${(value / 1000).toStringAsFixed(1)}k'
         : value.toStringAsFixed(1);
+    final displayValue = suffix != null ? '$raw$suffix' : raw;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

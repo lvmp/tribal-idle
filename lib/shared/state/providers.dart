@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tribal_idle/domain/logic/fire_logic.dart';
 import 'package:tribal_idle/domain/models/game_state.dart';
 import 'package:tribal_idle/infrastructure/persistence/hive_save_service.dart';
 
@@ -24,7 +25,15 @@ class GameStateNotifier extends Notifier<GameState> {
 
   /// Inicializa o estado a partir do save (ou cria novo).
   Future<void> initialize() async {
-    state = await _saveService.loadOrCreate();
+    final loaded = await _saveService.loadOrCreate();
+    // Guarda de migração: saves antigos (sem fireMaxFuel) podem ter fuel = 0.
+    // Nesses casos iniciamos um novo jogo para garantir uma demo limpa.
+    if (loaded.fireFuelSeconds <= 0 && loaded.wood > 0) {
+      // Save legado detectado — reinicia preservando madeira acumulada
+      state = GameState(wood: loaded.wood, food: loaded.food);
+    } else {
+      state = loaded;
+    }
   }
 
   /// Processa um tick da economia (chamado pelo TimerComponent a cada 1s).
@@ -48,6 +57,21 @@ class GameStateNotifier extends Notifier<GameState> {
     state = state.copyWith(food: state.food + amount);
   }
 
+  /// Adiciona combustível ao fogo consumindo madeira.
+  ///
+  /// Retorna `false` se não houver madeira suficiente.
+  bool addFuel(double fuelAmount) {
+    final cost = FireLogic.woodCostForFuel(fuelAmount);
+    if (state.wood < cost) return false;
+
+    state = state.copyWith(
+      wood: state.wood - cost,
+      fireFuelSeconds: (state.fireFuelSeconds + fuelAmount)
+          .clamp(0.0, state.fireMaxFuel),
+    );
+    return true;
+  }
+
   /// Reseta o jogo (ex: prestige).
   Future<void> reset() async {
     await _saveService.clear();
@@ -62,3 +86,58 @@ class GameStateNotifier extends Notifier<GameState> {
 final gameStateProvider = NotifierProvider<GameStateNotifier, GameState>(
   GameStateNotifier.new,
 );
+
+// ── Fire State (Derivado) ─────────────────────────────────────────────────────
+
+/// Snapshot imutável do estado do fogo para consumo rápido pela UI/Flame.
+///
+/// Derivado do [GameState] — nunca armazene lógica aqui.
+class FireState {
+  /// Combustível restante em segundos.
+  final double fuelSeconds;
+
+  /// Capacidade máxima em segundos.
+  final double maxFuelSeconds;
+
+  /// Percentagem [0.0 – 1.0].
+  final double fuelPercent;
+
+  /// `true` se o fogo está completamente apagado → penalidade de produção ativa.
+  final bool isExtinguished;
+
+  /// `true` se o fogo está abaixo de 20% → estado de crise (pulsar).
+  final bool isCrisis;
+
+  const FireState({
+    required this.fuelSeconds,
+    required this.maxFuelSeconds,
+    required this.fuelPercent,
+    required this.isExtinguished,
+    required this.isCrisis,
+  });
+
+  factory FireState.fromGameState(GameState gs) => FireState(
+        fuelSeconds: gs.fireFuelSeconds,
+        maxFuelSeconds: gs.fireMaxFuel,
+        fuelPercent: gs.fireFuelPercent,
+        isExtinguished: gs.fireIsExtinguished,
+        isCrisis: gs.fireIsCrisis,
+      );
+
+  static const FireState initial = FireState(
+    fuelSeconds: 60,
+    maxFuelSeconds: FireLogic.kDefaultMaxFuel,
+    fuelPercent: 60 / FireLogic.kDefaultMaxFuel,
+    isExtinguished: false,
+    isCrisis: false,
+  );
+}
+
+/// Provider derivado — re-emite sempre que [gameStateProvider] muda.
+///
+/// Consume exclusivamente valores derivados de [GameState]; não mantém
+/// nenhum estado próprio de fogo — garantindo Single Source of Truth.
+final fireStateProvider = Provider<FireState>((ref) {
+  final gs = ref.watch(gameStateProvider);
+  return FireState.fromGameState(gs);
+});
