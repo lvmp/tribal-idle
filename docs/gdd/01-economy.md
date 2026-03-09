@@ -89,3 +89,4 @@ currentWood = 0
   A mesma lógica proporcional de segmentação do fogo se aplica aos buffs. O tick offline divide a matemática: computa os minutos cobertos por um multiplicador `buffMultiplier = 2.0` que estão dentro de `timeOfflineSeconds` e volta o ganho normal no tempo restante após a expiração.
 - **Geração de lenha excedendo o consumo (Auto-Susto)**
   Se automatizadores passarem a coletar taxa de madeira mais rápida do que é consumida (ex: `woodProductionRate` > `woodConsumptionRate`), o saldo final do *offline production loop* de `currentWood` excederia logicamente e ficaria infinito. Por isso o valor gerado offline precisa ao final receber um `currentWood = min(currentWood, maxWoodCapacity)`.
+
