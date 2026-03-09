@@ -41,24 +41,31 @@ class _GameScreen extends ConsumerStatefulWidget {
 }
 
 class _GameScreenState extends ConsumerState<_GameScreen> {
-  late final TribalIdleGame _game;
+  TribalIdleGame? _game;
 
   @override
-  void initState() {
-    super.initState();
-    // Passamos o ProviderContainer para que o FlameGame possa acessar providers
-    // fora da árvore de widgets (no game loop).
-    _game = TribalIdleGame(container: ProviderScope.containerOf(context));
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // ProviderScope.containerOf() acessa um InheritedWidget, portanto
+    // não pode ser chamado dentro de initState. didChangeDependencies é o
+    // local correto para acessar herança de contexto.
+    _game ??= TribalIdleGame(container: ProviderScope.containerOf(context));
   }
 
   @override
   Widget build(BuildContext context) {
+    final game = _game;
+    if (game == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: Colors.orange)),
+      );
+    }
     return Scaffold(
       body: GameWidget<TribalIdleGame>(
-        game: _game,
+        game: game,
         // ADR 001: Overlays Flutter que reagem ao estado via Riverpod
         overlayBuilderMap: {
-          'hud': (ctx, game) => HudOverlay(game: game),
+          'hud': (ctx, g) => HudOverlay(game: g),
           // TODO: Adicionar conforme o desenvolvimento avança:
           // 'upgrade_menu': (ctx, game) => UpgradeMenu(game: game),
           // 'shop':         (ctx, game) => ShopOverlay(game: game),

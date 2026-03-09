@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tribal_idle/presentation/game/components/wood_label_component.dart';
 import 'package:tribal_idle/shared/state/providers.dart';
 
 // ── World ─────────────────────────────────────────────────────────────────────
@@ -10,8 +11,15 @@ import 'package:tribal_idle/shared/state/providers.dart';
 ///
 /// Adicione aqui: background, fogueira, NPCs, zonas de coleta.
 class TribalWorld extends World {
+  final ProviderContainer container;
+
+  TribalWorld({required this.container});
+
   @override
   Future<void> onLoad() async {
+    // Exibe o valor de madeira diretamente no canvas Flame.
+    await add(WoodLabelComponent(container: container));
+
     // TODO: Adicionar componentes visuais:
     //   - ParallaxComponent (background)
     //   - FireComponent
@@ -36,7 +44,7 @@ class TribalIdleGame extends FlameGame<TribalWorld> {
 
   TribalIdleGame({required ProviderContainer container})
     : _container = container,
-      super(world: TribalWorld());
+      super(world: TribalWorld(container: container));
 
   GameStateNotifier get _notifier =>
       _container.read(gameStateProvider.notifier);
