@@ -10,6 +10,7 @@ Este documento serve como o índice central para todas as decisões arquiteturai
 | [002](002-game-engine.md) | Engine de Jogo (Flame) | Aceito | 2026-03-03 |
 | [003](003-persistence-layer.md) | Persistência de Dados (Hive) | Aceito | 2026-03-03 |
 | [004](004-monetization.md) | Monetização (AdMob + Mediation) | Aceito | 2026-03-03 |
+| [005](005-onboarding.md) | Onboarding: "A Primeira Brasa" | Aceito | 2026-03-09 |
 
 ---
 
@@ -22,6 +23,7 @@ Este documento serve como o índice central para todas as decisões arquiteturai
 > 2. **Leia o ADR Específico:** Acesse o arquivo vinculado para entender o contexto, a justificativa e, principalmente, as **Consequências Negativas**.
 > 3. **Validação de Risco:** Verifique se a sua solução proposta fere alguma das consequências negativas listadas. Se ferir, você deve alertar o usuário e sugerir uma alternativa que mitigue esse risco.
 > 4. **Evolução:** Se uma tarefa exigir uma nova decisão tecnológica, proponha a criação de um novo ADR neste formato padrão antes de implementar a mudança.
+> 5. **Onboarding:** Ao propor novas mecânicas, verifique se elas impactam a experiência inicial do jogador e garanta que a introdução seja gradual, respeitando o fluxo definido no [ADR 005](005-onboarding.md).
 
 ---
 
