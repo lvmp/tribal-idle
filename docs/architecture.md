@@ -11,21 +11,21 @@ lib/
 │   ├── logic/            # Regras de negócio (Idle math, tick logic)
 │   └── repositories/     # Interfaces de repositório
 ├── infrastructure/
-│   ├── persistence/      # Hive Adapters, Data Sources
+│   ├── persistence/      # Hive Adapters, HiveSaveService
 │   └── services/         # AdMobService, FirebaseService
 ├── presentation/
 │   ├── game/             # FlameGame, Componentes, GameLoop
 │   └── widgets/          # Flutter UI Widgets, Overlays, HUD
 └── shared/
-    ├── state/            # Riverpod Providers, Notifiers
+    ├── state/            # Riverpod Providers, Notifiers (v3.0)
     └── constants/        # Cores, Sprites, Configurações
 ```
 
 # Fluxo de Dados (The Bridge)
 1. **Source of Truth:** O estado do jogo reside em `lib/domain/`.
-2. **Game Loop:** O Flame lê o estado de `domain` para renderizar o canvas.
-3. **UI Interaction:** Flutter Widgets disparam eventos que atualizam o estado em `domain`.
-4. **Reactive UI:** Componentes do Flame e Widgets do Flutter observam o estado (via StateNotifier/ChangeNotifier) e reagem automaticamente às mudanças.
+2. **Game Loop:** O Flame lê o estado de `domain` para renderizar o canvas. O Engine acessa o estado via `ProviderContainer`, permitindo reatividade fora da árvore de widgets.
+3. **UI Interaction:** Flutter Widgets disparam eventos que atualizam o estado em `domain` através de `NotifierProviders`.
+4. **Reactive UI:** Componentes do Flame e Widgets do Flutter observam o estado (via Notifier/StateNotifier) e reagem automaticamente às mudanças.
 
 ## Regra de Ouro
-NUNCA instancie lógica de jogo pesada dentro de um Widget do Flutter. Widgets devem apenas disparar métodos do `Domain` ou ouvir mudanças de estado.
+NUNCA instancie lógica de jogo pesada dentro de um Widget do Flutter. Widgets devem apenas disparar métodos do `Domain` ou ouvir mudanças de estado. Toda a lógica de ticks e economia deve residir no `GameState` e ser disparada pelo Game Loop do Flame.
