@@ -2,7 +2,9 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tribal_idle/presentation/game/components/background_component.dart';
 import 'package:tribal_idle/presentation/game/components/fire_bar_component.dart';
+import 'package:tribal_idle/presentation/game/components/fire_component.dart';
 import 'package:tribal_idle/presentation/game/components/wood_label_component.dart';
 import 'package:tribal_idle/shared/state/providers.dart';
 
@@ -17,14 +19,9 @@ class TribalWorld extends World {
 
   TribalWorld({required this.container});
 
-  @override
-  Future<void> onLoad() async {
-    // TODO: Adicionar componentes visuais:
-    //   - ParallaxComponent (background)
-    //   - FireComponent (sprite da fogueira)
-    //   - ZoneComponent(s) (coleta de madeira, comida)
-    //   - NpcComponent(s)
-  }
+  // World is intentionally empty for now.
+  // Visual components live in camera.viewport for correct Z-ordering.
+  // Future: ZoneComponents, NpcComponents will be added here.
 }
 
 // ── Game ──────────────────────────────────────────────────────────────────────
@@ -55,10 +52,14 @@ class TribalIdleGame extends FlameGame<TribalWorld> {
     // Carregar estado salvo (inclui ganhos offline)
     await _notifier.initialize();
 
-    // ── HUD Flame (viewport-space — não se move com a câmera) ─────────
-    // Componentes adicionados ao camera.viewport ficam fixos na tela,
-    // independente de onde a câmera está no mundo.
+    // ── Camadas visuais no viewport (screen-space — não se movem com a câmera) ─
+    // priority -1 → background da clareira (camada base)
+    // priority  5 → fogueira (sobre o background, abaixo do HUD)
+    // priority 10 → WoodLabel
+    // priority 20 → FireBar
     await camera.viewport.addAll([
+      BackgroundComponent(),
+      FireComponent(container: _container),
       WoodLabelComponent(container: _container),
       FireBarComponent(container: _container),
     ]);

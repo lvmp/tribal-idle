@@ -2,15 +2,17 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
-import 'package:flutter/material.dart' show Color, LinearGradient, TextStyle, FontWeight, Shadow, Offset;
+import 'package:flutter/material.dart' show Color, LinearGradient;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tribal_idle/presentation/game/components/fire_component.dart';
 import 'package:tribal_idle/shared/state/providers.dart';
 
 /// Barra de fogo do Flame — exibe o nível de combustível diretamente no canvas.
 ///
 /// Responsabilidades (SOMENTE):
 ///   - Ler o [FireState] via [ProviderContainer] a cada frame
-///   - Desenhar a barra com gradiente de cor (verde → amarelo → laranja → vermelho)
+///   - Desenhar a barra com gradiente de cor (vermelho → âmbar → verde)
+///   - Exibir sprite mini da fogueira à esquerda (sem texto numérico bruto)
 ///   - Ativar/desativar efeito de pulsação quando em estado de crise (< 20%)
 ///
 /// Lógica de negócio → [FireLogic] + [GameStateNotifier]. NUNCA aqui.
@@ -20,15 +22,21 @@ class FireBarComponent extends PositionComponent {
   // ─── Layout ──────────────────────────────────────────────────────────────
   static const double _barHeight = 14.0;
   static const double _borderRadius = 7.0;
-  static const double _labelFontSize = 11.0;
   static const double _paddingH = 24.0;
   static const double _bottomOffset = 20.0;
 
+  /// Largura reservada para o ícone sprite à esquerda da barra.
+  static const double _iconSize = 20.0;
+  static const double _iconGap = 6.0;
+
   // ─── Estado interno de renderização ──────────────────────────────────────
   double _pct = 1.0;
+  FireLevel _currentLevel = FireLevel.high;
   bool _wasCrisis = false;
   bool _pulseActive = false;
-  late TextPaint _labelPaint;
+
+  /// Sprites das 4 versões da fogueira — carregados em onLoad().
+  final Map<FireLevel, Sprite> _fireSprites = {};
 
   FireBarComponent({required ProviderContainer container})
       : _container = container,
@@ -36,27 +44,19 @@ class FireBarComponent extends PositionComponent {
 
   @override
   Future<void> onLoad() async {
-    _labelPaint = TextPaint(
-      style: TextStyle(
-        color: const Color(0xFFFFFFFF),
-        fontSize: _labelFontSize,
-        fontWeight: FontWeight.bold,
-        shadows: const [
-          Shadow(
-            color: Color(0xAA000000),
-            offset: Offset(0.5, 0.5),
-            blurRadius: 2,
-          ),
-        ],
-      ),
-    );
+    _fireSprites[FireLevel.veryLow] =
+        await Sprite.load('fogueira/fire_very_low.png');
+    _fireSprites[FireLevel.low] = await Sprite.load('fogueira/fire_low.png');
+    _fireSprites[FireLevel.medium] =
+        await Sprite.load('fogueira/fire_medium.png');
+    _fireSprites[FireLevel.high] = await Sprite.load('fogueira/fire_high.png');
   }
 
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    final barWidth = size.x - _paddingH * 2;
-    this.size = Vector2(barWidth, _barHeight);
+    final totalWidth = size.x - _paddingH * 2;
+    this.size = Vector2(totalWidth, _barHeight);
     position = Vector2(_paddingH, size.y - _barHeight - _bottomOffset);
   }
 
@@ -66,6 +66,7 @@ class FireBarComponent extends PositionComponent {
 
     final fire = _container.read(fireStateProvider);
     _pct = fire.fuelPercent;
+    _currentLevel = fireLevelFromPercent(_pct);
 
     final nowCrisis = fire.isCrisis;
     if (nowCrisis && !_wasCrisis) {
@@ -102,10 +103,27 @@ class FireBarComponent extends PositionComponent {
   void render(Canvas canvas) {
     final w = size.x;
     final h = size.y;
-    final fillW = (w * _pct).clamp(0.0, w);
+
+    // ── Ícone sprite (lado esquerdo da barra) ─────────────────────────────
+    final sprite = _fireSprites[_currentLevel];
+    if (sprite != null) {
+      sprite.render(
+        canvas,
+        position: Vector2(0, (h - _iconSize) / 2),
+        size: Vector2.all(_iconSize),
+      );
+    }
+
+    // ── Barra de combustível (deslocada para direita do ícone) ────────────
+    final barX = _iconSize + _iconGap;
+    final barW = w - barX;
+    final fillW = (barW * _pct).clamp(0.0, barW);
+
+    canvas.save();
+    canvas.translate(barX, 0);
 
     final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, w, h),
+      Rect.fromLTWH(0, 0, barW, h),
       const Radius.circular(_borderRadius),
     );
     final fillRrect = RRect.fromRectAndRadius(
@@ -116,10 +134,10 @@ class FireBarComponent extends PositionComponent {
     // Trilha (fundo visível)
     canvas.drawRRect(
       rrect,
-      Paint()..color = const Color(0x55FF8F00), // âmbar escuro translúcido
+      Paint()..color = const Color(0x55FF8F00),
     );
 
-    // Preenchimento com gradiente de cor
+    // Preenchimento com gradiente
     if (fillW > 0) {
       final fillColor = _colorForPercent(_pct);
       final gradientPaint = Paint()
@@ -136,19 +154,12 @@ class FireBarComponent extends PositionComponent {
     canvas.drawRRect(
       rrect,
       Paint()
-        ..color = const Color(0xAAFF8F00) // âmbar
+        ..color = const Color(0xAAFF8F00)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.0,
     );
 
-    // Label centrado
-    final label = '🔥 ${(_pct * 100).toStringAsFixed(0)}%';
-    _labelPaint.render(
-      canvas,
-      label,
-      Vector2(w / 2, h / 2),
-      anchor: Anchor.center,
-    );
+    canvas.restore();
   }
 
   /// Interpola a cor da barra: 0% → vermelho · 50% → âmbar · 100% → verde

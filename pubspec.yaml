@@ -44,4 +44,6 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/background/
+    - assets/images/fogueira/
     - assets/audio/
